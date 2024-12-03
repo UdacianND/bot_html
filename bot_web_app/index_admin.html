@@ -185,7 +185,7 @@
             const users = await response.json();
 
             const userList = document.getElementById('user-list');
-            userList.innerHTML = ''; // Clear existing list
+            userList.innerHTML = ''; 
 
             users.forEach(user => {
                 const card = document.createElement('div');
