@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="./common.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction History</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            padding-bottom: 70px; /* Ensure content doesn't overlap with the fixed Home button */
+        }
+
+        .container {
+            width: 80%;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2em;
+            color: #333;
+        }
+
+        .transaction-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            background-color: #f9f9f9;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .transaction-card p {
+            margin: 5px 0;
+            font-size: 1em;
+            line-height: 1.5;
+        }
+
+        .transaction-card .status {
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        .transaction-card .status.failed {
+            color: #FF5733;
+        }
+
+        .transaction-card .status.pending {
+            color: #FFA500;
+        }
+
+        .accept-btn {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        .accept-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .no-transactions {
+            text-align: center;
+            font-size: 1.2em;
+            color: #777;
+            margin-top: 20px;
+        }
+
+        .home-btn {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px;
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            font-size: 1.2em;
+            text-decoration: none;
+            border-top: 1px solid #ddd;
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .home-btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Transaction History</h1>
+        <div id="transaction-list">
+            <!-- Transaction cards will be injected here dynamically -->
+        </div>
+        <div id="no-transactions" class="no-transactions" style="display: none;">
+            No transactions found.
+        </div>
+    </div>
+
+    <!-- Fixed Home button -->
+    <a href="index_user.html" class="home-btn">Home</a>
+
+    <script>
+        const user = JSON.parse(localStorage.getItem('userInfo')); // Assuming user info is stored in localStorage
+        const userId = user.user_id; // Replace with actual user ID if necessary
+        const apiEndpoint = `${BASE_URL}/transactions?user_id=${userId}`;
+
+        // Fetch transactions from the API
+        async function fetchTransactions() {
+            try {
+                const response = await fetch(apiEndpoint);
+                const data = await response.json();
+
+                if (!data || data.transactions.length === 0) {
+                    document.getElementById("no-transactions").style.display = "block";
+                    return;
+                }
+
+                const transactionList = document.getElementById("transaction-list");
+                transactionList.innerHTML = ""; // Clear previous transactions
+                const transactions = data.transactions;
+
+                transactions.forEach(transaction => {
+                    const card = document.createElement("div");
+                    card.className = "transaction-card";
+
+                    card.innerHTML = `
+                        <p><strong>Date/Time:</strong> ${transaction.datetime}</p>
+                        <p><strong>Amount (Sum):</strong> ${transaction.amount_sum} UZS</p>
+                        <p><strong>Amount (USD):</strong> ${transaction.amount_usd} USD</p>
+                        <p><strong>Service Fee (Sum):</strong> ${transaction.service_fee_sum} UZS</p>
+                        <p><strong>Service Fee (USD):</strong> ${transaction.service_fee_usd} USD</p>
+                        <p><strong>Friend Name:</strong> ${transaction.friend_full_name}</p>
+                        <p><strong>User Name:</strong> ${transaction.user_full_name}</p>
+                        <p><strong>Status:</strong> 
+                            <span class="status ${transaction.status.toLowerCase()}">
+                                ${transaction.status}
+                            </span>
+                        </p>
+                    `;
+
+                    // Add Accept button if user is friend_id
+                    if (transaction.friend_id == userId && transaction.status === 'PENDING') {
+                        const acceptBtn = document.createElement("button");
+                        acceptBtn.className = "accept-btn";
+                        acceptBtn.textContent = "Accept";
+                        acceptBtn.addEventListener("click", async () => {
+                            await handleAccept(transaction.id, card);
+                        });
+                        card.appendChild(acceptBtn);
+                    }
+
+                    transactionList.appendChild(card);
+                });
+            } catch (error) {
+                console.error("Error fetching transactions:", error);
+                alert("Failed to load transactions. Please try again later.");
+            }
+        }
+
+        // Handle Accept button click
+        async function handleAccept(transaction_id, card) {
+            try {
+                const response = await fetch(`${BASE_URL}/transactions/status/${transaction_id}`, {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ status: "accepted" }),
+                });
+
+                if (response.ok) {
+                    // Update the transaction status in the card
+                    const statusElement = card.querySelector(".status");
+                    statusElement.textContent = "Accepted";
+                    statusElement.className = "status";
+                    card.querySelector(".accept-btn").remove(); // Remove the button after accepting
+                    alert("Transaction accepted successfully!");
+                } else {
+                    throw new Error("Failed to accept the transaction");
+                }
+            } catch (error) {
+                console.error("Error accepting transaction:", error);
+                alert("Failed to accept the transaction. Please try again.");
+            }
+        }
+
+        // Fetch transactions when the page loads
+        document.addEventListener("DOMContentLoaded", fetchTransactions);
+    </script>
+</body>
+</html>

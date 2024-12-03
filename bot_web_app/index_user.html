@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="./common.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Info</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: #333;
+        }
+
+        .user-info {
+            margin-bottom: 30px;
+            text-align: left;
+        }
+
+        .user-info p {
+            font-size: 1.2em;
+            margin: 10px 0;
+        }
+
+        .balance {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        .balance span {
+            margin-right: 15px;
+        }
+
+        .buttons {
+            margin-top: 30px;
+            display: block;
+            text-align: center;
+        }
+
+        button {
+            display: block;
+            width: 80%;
+            margin: 10px auto;
+            padding: 10px 20px;
+            font-size: 1.2em;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+        a {
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>User Info</h1>
+        </header>
+        <section class="balance">
+            <p><strong>Balance:</strong></p>
+            <span id="balance-sum"></span>: <span>Sum</span> |
+            <span id="balance-dollar"></span>: <span>USD</span>
+        </section>
+
+        <section class="buttons">
+            <a href="transaction_form.html"><button id="transaction-btn">Transaction</button></a> 
+            <a href="balance.html"><button id="fill-balance-btn">Fill Balance</button></a>
+            <a href="history.html"><button id="history-btn">History</button></a>
+        </section>
+    </div>
+
+    <script>
+        let user = JSON.parse(localStorage.getItem('userInfo'))
+        const userId = user.user_id; // Replace with dynamic user ID if needed
+
+        // Fetch user info and balance from API
+        async function getUserInfo() {
+            const response = await fetch(`${BASE_URL}/users/${userId}`);
+            const user = await response.json();
+
+            if (user) {
+
+                // Display balance
+                document.getElementById("balance-sum").textContent = user.balance_sum;
+                document.getElementById("balance-dollar").textContent = user.balance_dollar;
+            }
+        }
+
+        // Fetch user data when the page loads
+        document.addEventListener("DOMContentLoaded", getUserInfo);
+    </script>
+</body>
+</html>

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="./common.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 80%;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: #333;
+        }
+
+        .home-button {
+            margin-bottom: 20px;
+            display: inline-block;
+            padding: 10px 15px;
+            font-size: 1.2em;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        .home-button:hover {
+            background-color: #45a049;
+        }
+
+        .card {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .card p {
+            margin: 8px 0;
+            font-size: 1em;
+            color: #555;
+        }
+
+        section {
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 1em;
+            margin-bottom: 5px;
+        }
+
+        input, select {
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1em;
+        }
+
+        button {
+            padding: 10px;
+            font-size: 1.2em;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h3>Admin Panel</h3>
+            <a href="/" class="home-button">Home</a>
+        </header>
+
+        <section class="user-list">
+            <h4>List of Users</h4>
+            <div id="user-list">
+                <!-- User cards will be populated here dynamically -->
+            </div>
+        </section>
+
+        <section class="user-form">
+            <h3>Create New User</h3>
+            <form id="create-user-form">
+                <label for="first_name">First Name</label>
+                <input type="text" id="first_name" name="first_name" required>
+
+                <label for="last_name">Last Name</label>
+                <input type="text" id="last_name" name="last_name" required>
+
+                <label for="phone">Phone Number</label>
+                <input type="text" id="phone" name="phone" required>
+
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+
+                <label for="region">Region</label>
+                <select id="region" name="region" required>
+                    <!-- Regions will be populated here -->
+                </select>
+
+                <label for="district">District</label>
+                <select id="district" name="district" required>
+                    <!-- Districts will be populated based on the selected region -->
+                </select>
+
+                <button type="submit">Create User</button>
+            </form>
+        </section>
+    </div>
+
+    <script>
+        const regionsData = {
+            "Bukhara": ["Vobkent", "Olot"],
+            "Fergana": ["Dangara", "Kokand"]
+        };
+
+        // Populate the region dropdown
+        const regionSelect = document.getElementById("region");
+        for (const region in regionsData) {
+            const option = document.createElement("option");
+            option.value = region;
+            option.textContent = region;
+            regionSelect.appendChild(option);
+        }
+
+        // Populate the district dropdown based on selected region
+        const districtSelect = document.getElementById("district");
+
+        regionSelect.addEventListener("change", function() {
+            const selectedRegion = regionSelect.value;
+            const districts = regionsData[selectedRegion] || [];
+            districtSelect.innerHTML = '';  // Clear existing options
+
+            districts.forEach(district => {
+                const option = document.createElement("option");
+                option.value = district;
+                option.textContent = district;
+                districtSelect.appendChild(option);
+            });
+        });
+
+        // Fetch and display users from the backend
+        async function fetchUsers() {
+            const response = await fetch(`${BASE_URL}/users`);
+            const users = await response.json();
+
+            const userList = document.getElementById('user-list');
+            userList.innerHTML = ''; // Clear existing list
+
+            users.forEach(user => {
+                const card = document.createElement('div');
+                card.classList.add('card');
+                card.innerHTML = `
+                    <p><strong>First Name:</strong> ${user.first_name}</p>
+                    <p><strong>Last Name:</strong> ${user.last_name}</p>
+                    <p><strong>Phone:</strong> ${user.phone_number}</p>
+                    <p><strong>Region:</strong> ${user.region || 'N/A'}</p>
+                    <p><strong>District:</strong> ${user.district || 'N/A'}</p>
+                `;
+                userList.appendChild(card);
+            });
+        }
+
+        // Handle form submission
+        document.getElementById('create-user-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const form = e.target;
+            const data = {
+                first_name: form.first_name.value,
+                last_name: form.last_name.value,
+                phone: form.phone.value,
+                password: form.password.value,
+                region: form.region.value,
+                district: form.district.value,
+            };
+
+            const response = await fetch(`${BASE_URL}/users`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            });
+
+            const result = await response.json();
+            alert(result.message || 'User created successfully');
+            form.reset();  // Clear the form after submission
+            fetchUsers();  // Refresh the user list
+        });
+
+        // Fetch users when the page loads
+        document.addEventListener('DOMContentLoaded', fetchUsers);
+    </script>
+</body>
+</html>

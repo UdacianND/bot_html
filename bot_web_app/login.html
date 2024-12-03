@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="./common.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f3f4f6;
+        }
+        .login-container {
+            width: 90%;
+            max-width: 400px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            font-size: 1.5rem;
+            color: #333;
+        }
+        label {
+            display: block;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: #555;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 20px;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .message {
+            text-align: center;
+            font-size: 0.9rem;
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h1>Login</h1>
+        <form id="loginForm">
+            <label for="phone">Phone Number:</label>
+            <input type="tel" id="phone" name="phone" placeholder="+123456789" required>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+            <div class="message" id="message"></div>
+            <button type="submit">Login</button>
+        </form>
+    </div>
+    <script>
+        const form = document.getElementById('loginForm');
+        const message = document.getElementById('message');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            message.textContent = ''; // Clear previous messages
+            const phone = form.phone.value;
+            const password = form.password.value;
+
+            try {
+                const response = await fetch(`${BASE_URL}/users/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ phone, password }),
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Redirect or display success message
+                    console.log(data)
+                    localStorage.setItem('userInfo', JSON.stringify(data))
+                    if(data.is_admin)
+                        window.location.href = './index_admin.html';
+                    else
+                        window.location.href = './index_user.html';
+                } else {
+                    // Display error message
+                    message.textContent = data.error || 'Login failed. Try again.';
+                }
+            } catch (error) {
+                message.textContent = 'An error occurred. Please try again later.';
+            }
+        });
+    </script>
+</body>
+</html>

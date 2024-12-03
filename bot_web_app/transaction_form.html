@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="./common.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            padding-bottom: 60px; /* Prevent content from being hidden by the Home button */
+        }
+
+        .container {
+            width: 50%;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-size: 1.2em;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 10px;
+            font-size: 1em;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1.2em;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .home-button {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            padding: 15px 0;
+            font-size: 1.2em;
+            text-decoration: none;
+            font-weight: bold;
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .home-button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h3>Transaction Form</h3>
+        </header>
+
+        <form id="transaction-form">
+            <div class="form-group">
+                <label for="region">Region</label>
+                <select id="region">
+                    <option value="">Select Region</option>
+                    <option value="Bukhara">Bukhara</option>
+                    <option value="Fergana">Fergana</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="district">District</label>
+                <select id="district" disabled>
+                    <option value="">Select District</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="user">User</label>
+                <select id="user" disabled>
+                    <option value="">Select User</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="amount_usd">Amount USD</label>
+                <input type="number" id="amount_usd" placeholder="Enter amount in USD" min="0">
+            </div>
+
+            <div class="form-group">
+                <label for="amount_sum">Amount Sum</label>
+                <input type="number" id="amount_sum" placeholder="Enter amount in Sum" min="0">
+            </div>
+
+            <div class="form-group">
+                <label for="service-fee-usd">Service Fee USD</label>
+                <input type="number" id="service-fee-usd" placeholder="Enter service fee in USD" min="0">
+            </div>
+
+            <div class="form-group">
+                <label for="service-fee-sum">Service Fee Sum</label>
+                <input type="number" id="service-fee-sum" placeholder="Enter service fee in Sum" min="0">
+            </div>
+
+            <button type="submit">Submit Transaction</button>
+        </form>
+    </div>
+
+    <!-- Home button -->
+    <a href="index_user.html" class="home-button">Home</a>
+
+    <script>
+        // Data for districts based on regions
+        const districtData = {
+            "Bukhara": ["Vobkent", "Olot"],
+            "Fergana": ["Dangara", "Kokand"]
+        };
+
+        let allUsers = []; // Store all users globally
+
+        // Fetch all users and store them
+        async function fetchUsers() {
+            const response = await fetch(`${BASE_URL}/users`);
+            const users = await response.json();
+            allUsers = users;
+        }
+
+        // Populate district options based on region selection
+        document.getElementById('region').addEventListener('change', function () {
+            const region = this.value;
+            const districtSelect = document.getElementById('district');
+            const userSelect = document.getElementById('user');
+
+            if (region) {
+                districtSelect.innerHTML = '<option value="">Select District</option>';
+                districtData[region].forEach(district => {
+                    const option = document.createElement('option');
+                    option.value = district;
+                    option.textContent = district;
+                    districtSelect.appendChild(option);
+                });
+                districtSelect.disabled = false;
+            } else {
+                districtSelect.disabled = true;
+                userSelect.disabled = true;
+            }
+
+            userSelect.innerHTML = '<option value="">Select User</option>';
+            userSelect.disabled = true;
+        });
+
+        // Populate user list based on region and district
+        document.getElementById('district').addEventListener('change', function () {
+            const region = document.getElementById('region').value;
+            const district = this.value;
+            const userSelect = document.getElementById('user');
+            let userInfo = JSON.parse(localStorage.getItem('userInfo'));
+            if (region && district) {
+                const filteredUsers = allUsers.filter(user => user.region === region && user.district === district && user.id != userInfo.user_id);
+                userSelect.innerHTML = '<option value="">Select User</option>';
+                filteredUsers.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.textContent = `${user.first_name} ${user.last_name} | Sum: ${user.balance_sum}; USD: ${user.balance_dollar}`;
+                    userSelect.appendChild(option);
+                });
+
+                userSelect.disabled = false;
+            } else {
+                userSelect.disabled = true;
+            }
+        });
+
+        // Handle form submission
+        document.getElementById('transaction-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const user = document.getElementById('user').value;
+            const amount_usd = document.getElementById('amount_usd').value;
+            const amount_sum = document.getElementById('amount_sum').value;
+            const service_fee_usd = document.getElementById('service-fee-usd').value;
+            const service_fee_sum = document.getElementById('service-fee-sum').value;
+
+            if (!user || !(amount_usd || !amount_sum) || !(service_fee_usd || service_fee_sum)) {
+                alert('Please fill in the required fields.');
+                return;
+            }
+
+            const currentUserId = JSON.parse(localStorage.getItem('userInfo')).user_id;
+
+            const transactionData = {
+                friend_id: user,
+                amount_usd: parseFloat(amount_usd) || 0,
+                amount_sum: parseFloat(amount_sum) || 0,
+                service_fee_usd: parseFloat(service_fee_usd) || 0,
+                service_fee_sum: parseFloat(service_fee_sum) || 0,
+            };
+
+            try {
+                const response = await fetch(`${BASE_URL}/transactions?user_id=${currentUserId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(transactionData),
+                });
+
+                if (response.ok) {
+                    alert('Transaction successfully submitted!');
+                    window.location.href = './index_user.html';
+                } else {
+                    const error = await response.json();
+                    alert(`Error: ${error.message || 'Unable to process transaction.'}`);
+                }
+            } catch (err) {
+                alert('An error occurred while submitting the transaction.');
+                console.error('Network Error:', err);
+            }
+        });
+
+        // Fetch users on page load
+        window.addEventListener('DOMContentLoaded', fetchUsers);
+    </script>
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="./common.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fill Balance</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 80%;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2em;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 1em;
+            margin-bottom: 5px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            font-size: 1em;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+        }
+
+        .form-group button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+
+        .form-group button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .status-message {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
+
+        .status-message.success {
+            color: green;
+        }
+
+        .status-message.error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Fill Balance</h1>
+        <div id="status-message" class="status-message"></div>
+
+        <form id="balance-form">
+            <div class="form-group">
+                <label for="usd-balance">USD Balance</label>
+                <input type="number" id="usd-balance" placeholder="Enter USD balance" min="0" step="0.01" value="0">
+            </div>
+            <div class="form-group">
+                <label for="sum-balance">Sum Balance</label>
+                <input type="number" id="sum-balance" placeholder="Enter Sum balance" min="0" step="1" value="0">
+            </div>
+            <div class="form-group">
+                <button type="submit" id="submit-btn">Submit</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const user = JSON.parse(localStorage.getItem('userInfo')); // Assuming user info is stored in localStorage
+        const userId = user.user_id;
+        const apiEndpoint = `${BASE_URL}/users/balance?user_id=${userId}`;
+        const submitBtn = document.getElementById('submit-btn');
+        const statusMessage = document.getElementById('status-message');
+        const usdBalanceInput = document.getElementById('usd-balance');
+        const sumBalanceInput = document.getElementById('sum-balance');
+
+        // Handle form submission
+        document.getElementById('balance-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const usdBalance = parseFloat(usdBalanceInput.value);
+            const sumBalance = parseFloat(sumBalanceInput.value);
+
+            if (isNaN(usdBalance) || isNaN(sumBalance)) {
+                alert("Please enter valid balance values.");
+                return;
+            }
+
+            const requestBody = {
+                usd_balance: usdBalance,
+                sum_balance: sumBalance,
+            };
+
+            try {
+                const response = await fetch(apiEndpoint, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody),
+                });
+
+                if (response.ok) {
+                    statusMessage.textContent = "Balance updated successfully!";
+                    statusMessage.classList.add("success");
+                    window.location.href = './index_user.html'
+                } else {
+                    statusMessage.textContent = "Failed to update balance.";
+                    statusMessage.classList.add("error");
+                }
+            } catch (error) {
+                console.error("Error updating balance:", error);
+                statusMessage.textContent = "Error updating balance. Please try again.";
+                statusMessage.classList.add("error");
+            }
+        });
+
+    </script>
+</body>
+</html>
