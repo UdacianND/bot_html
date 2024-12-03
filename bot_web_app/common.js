@@ -1,1 +1,1 @@
-let BASE_URL = 'http://localhost:8000'
+let BASE_URL = 'https://3806-185-213-230-15.ngrok-free.app'
